@@ -3,13 +3,15 @@ EXE = memusage
 
 FLAGS = -std=c++17
 FLAGS += -Wall
-FLAGS += -ID:\SDL64\include\SDL2 -LD:\SDL64\lib
-FLAGS += -lmingw32 -lSDL2main -lSDL2 -lSDL2_image
+FLAGS += -ID:\SDL64\include\SDL2 -LD:\SDL64\lib -Iinc
+FLAGS += -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf
 
 # FLAGS += -Wl,--subsystem,windows
 
 OBJS = main.o \
-       data.o
+			 nfont/NFont.o \
+			 nfont/SDL_FontCache.o \
+       chart.o
 
 $(EXE): $(OBJS)
 	$(CC) $(^:%.o=obj/%.o) $(FLAGS) -o bin/$@ -lpsapi
