@@ -89,6 +89,8 @@ int getData(void *data) {
       GetModuleFileNameExA(hProcess, nullptr, modName, sizeof(modName)/sizeof(*modName));
       GetProcessMemoryInfo(hProcess, (PROCESS_MEMORY_COUNTERS*) &pmc, sizeof(pmc));
 
+      if (pmc.WorkingSetSize/(1024*1024) == 0) continue;
+
       std::string name { baseName }, modNameString { modName };
       if (modNameString.find("C:\\Windows") != std::string::npos || pollSystemList(name)) {
         systemUsage += pmc.WorkingSetSize;
@@ -109,7 +111,7 @@ int getData(void *data) {
       for (const auto [name, amount] : commonEx) {
         auto ix = c->find(name);
         if (ix == -1) c->addProcess(name, amount);
-        else c->setProcess(ix, amount, true);
+        else c->setProcess(ix, amount, false);
       }
     }
 
