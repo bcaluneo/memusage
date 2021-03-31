@@ -10,16 +10,16 @@
 #include "chart.hh"
 #include "data.hh"
 
+// #define __TEST
+
 bool quit = 0;
 SDL_Window *window;
 SDL_Renderer *render;
+Chart chart;
 
 int renderThread(void *) {
-  Chart chart;
   NFont font(render, "resources/font.ttf", LARGE_PT, NFont::Color(174, 171, 255, 255)),
         fontSmall(render, "resources/font.ttf", SMALL_PT, NFont::Color(174, 171, 255, 255));
-
-  SDL_CreateThread(getData, "Data Thread", static_cast<void*>(&chart));
 
   int w, h;
   while (!quit) {
@@ -47,10 +47,16 @@ int main(int argc, char **args) {
   SDL_RenderClear(render);
 
   SDL_CreateThread(renderThread, "Render Thread", nullptr);
+  SDL_CreateThread(getData, "Data Thread", static_cast<void*>(&chart));
 
   SDL_RenderSetScale(render, RENDER_SCALE, RENDER_SCALE);
 
   SDL_Event event;
+  #ifdef __TEST
+    size_t* t;
+    size_t sz = 4900000000;
+  #endif
+
   while (!quit) {
     while (SDL_PollEvent(&event)) {
 			switch (event.type) {
@@ -60,12 +66,33 @@ int main(int argc, char **args) {
 				case SDL_KEYUP:
 					auto k = event.key.keysym.sym;
 					if (k == SDLK_ESCAPE) quit = 1;
-					break;
+
+          #ifdef __TEST
+            if (k == SDLK_h) {
+              std::cout << "Allocating t... ";
+              t = (size_t*) malloc(sz);
+              memset(t, 0, sz);
+              std::cout << " OK\n";
+            }
+            if (k == SDLK_j) {
+              std::cout << "Freeing t... ";
+              free(t);
+              t = nullptr;
+              std::cout << " OK\n";
+            }
+          #endif
+
+          break;
 				}
 		}
 
     SDL_Delay(1000/60);
   }
+
+  #ifdef __TEST
+    /*Just in case I forgot to free this... */
+    if (t) free(t);
+  #endif
 
 	SDL_Quit();
 

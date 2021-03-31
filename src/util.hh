@@ -14,8 +14,9 @@ const unsigned SMALL_PT = 19;
 const unsigned LARGE_PT = 20;
 const unsigned POLL_TIME = 1000;
 const double RENDER_SCALE = 1.0;
+const unsigned MB = 1000;
 
-typedef std::tuple<std::string, unsigned long> Process;
+typedef std::tuple<std::string, size_t> Process;
 
 inline void drawText(SDL_Renderer *render, std::string msg, NFont &font, int x, int y, NFont::Color col) {
 	font.draw(render, x, y, col, msg.c_str());

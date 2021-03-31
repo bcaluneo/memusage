@@ -7,6 +7,7 @@
 #include <memory>
 #include <algorithm>
 #include "SDL.h"
+#include <limits>
 
 #ifndef DATA_HH
 #define DATA_HH
@@ -72,12 +73,12 @@ int getData(void *data) {
     GlobalMemoryStatusEx(&memStatus);
     c->setPhysicalMemory(memStatus.ullTotalPhys, memStatus.ullTotalPhys-memStatus.ullAvailPhys);
 
-    DWORD processes[1024], cbNeeded, totalProcesses;
+    DWORD processes[MB], cbNeeded, totalProcesses;
     EnumProcesses(processes, sizeof(processes), &cbNeeded);
     totalProcesses = cbNeeded / sizeof(DWORD);
 
     unsigned systemUsage = 0;
-    std::map<std::string, unsigned long> commonEx;
+    std::map<std::string, size_t> commonEx;
     for (size_t i = 0; i < totalProcesses; i++) {
       HANDLE hProcess;
       hProcess = OpenProcess(PROCESS_QUERY_INFORMATION |PROCESS_VM_READ, FALSE, processes[i]);
@@ -89,7 +90,7 @@ int getData(void *data) {
       GetModuleFileNameExA(hProcess, nullptr, modName, sizeof(modName)/sizeof(*modName));
       GetProcessMemoryInfo(hProcess, (PROCESS_MEMORY_COUNTERS*) &pmc, sizeof(pmc));
 
-      if (pmc.WorkingSetSize/(1024*1024) == 0) continue;
+      if (pmc.WorkingSetSize/(MB*MB) == 0) continue;
 
       std::string name { baseName }, modNameString { modName };
       if (modNameString.find("C:\\Windows") != std::string::npos || pollSystemList(name)) {
