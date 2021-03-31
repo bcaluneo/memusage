@@ -35,6 +35,7 @@ int renderThread(void *) {
 }
 
 int main(int argc, char **args) {
+  srand(time(NULL));
   SDL_Init(SDL_INIT_VIDEO);
 
 	window = SDL_CreateWindow("memusage", SDL_WINDOWPOS_CENTERED,

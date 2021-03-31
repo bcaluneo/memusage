@@ -9,7 +9,7 @@
 #define UTIL_HH
 
 const unsigned SCREEN_WIDTH = 800;
-const unsigned SCREEN_HEIGHT = 850;
+const unsigned SCREEN_HEIGHT = 650;
 const unsigned SMALL_PT = 19;
 const unsigned LARGE_PT = 20;
 const unsigned POLL_TIME = 1000;

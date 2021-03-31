@@ -7,6 +7,7 @@
 #include <sstream>
 #include <algorithm>
 #include <vector>
+#include <map>
 #include <iomanip>
 #include <cmath>
 #include "util.hh"
