@@ -10,9 +10,6 @@
 #include "chart.hh"
 #include "data.hh"
 
-const unsigned SCREEN_WIDTH = 540;
-const unsigned SCREEN_HEIGHT = 640;
-
 bool quit = 0;
 SDL_Window *window;
 SDL_Renderer *render;
@@ -24,17 +21,18 @@ int main(int argc, char **args) {
 	window = SDL_CreateWindow("memusage", SDL_WINDOWPOS_CENTERED,
                                         SDL_WINDOWPOS_CENTERED,
                                         SCREEN_WIDTH,SCREEN_HEIGHT,
-                                        SDL_WINDOW_SHOWN);
+                                        SDL_WINDOW_SHOWN /*|SDL_WINDOW_RESIZABLE*/);
 	render = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
 
-  SDL_SetRenderDrawColor(render, 180, 180, 180, 255);
+  SDL_SetRenderDrawColor(render, 100, 100, 100, 255);
   SDL_RenderClear(render);
 
   Chart chart;
 	SDL_CreateThread(getData, "Data Thread", static_cast<void*>(&chart));
 
-  NFont font(render, "resources/font.ttf", 25, NFont::Color(174, 171, 255, 255));
+  NFont font(render, "resources/font.ttf", 20, NFont::Color(174, 171, 255, 255));
 
+  unsigned yoff = 0;
   SDL_Event event;
   while (!quit) {
     while (SDL_PollEvent(&event)) {
@@ -45,11 +43,16 @@ int main(int argc, char **args) {
 				case SDL_KEYUP:
 					auto k = event.key.keysym.sym;
 					if (k == SDLK_ESCAPE) quit = 1;
+          if (k == SDLK_u) yoff-=20;
+          // if (k == SDLK_j) yoff-=20;
 					break;
 				}
 		}
 
-    chart.draw(render);
+    SDL_SetRenderDrawColor(render, 100, 100, 100, 255);
+    SDL_RenderClear(render);
+
+    chart.draw(font, render, yoff);
 
     SDL_RenderPresent(render);
     SDL_Delay(1000 / 60);

@@ -2,20 +2,26 @@
 
 #include <string>
 #include <utility>
+#include "../inc/NFont.h"
 
 #ifndef UTIL_HH
 #define UTIL_HH
 
-void drawText(SDL_Renderer *render, std::string msg, NFont &font, int x, int y, NFont::Color col) {
+const unsigned SCREEN_WIDTH = 600;
+const unsigned SCREEN_HEIGHT = 950;
+
+typedef std::tuple<std::string, unsigned long> Process;
+
+inline void drawText(SDL_Renderer *render, std::string msg, NFont &font, int x, int y, NFont::Color col) {
 	font.draw(render, x, y, col, msg.c_str());
 }
 
-void drawTextWithShadow(SDL_Renderer *render, std::string msg, NFont &font, int x, int y, NFont::Color col) {
+inline void drawTextWithShadow(SDL_Renderer *render, std::string msg, NFont &font, int x, int y, NFont::Color col) {
 	font.draw(render, x + 2, y + 2, NFont::Color(0, 0, 0, 255), msg.c_str());
 	font.draw(render, x, y, col, msg.c_str());
 }
 
-void drawCenterText(SDL_Renderer *render, std::string msg, NFont &font, int x, int y, int w, int h, bool shadow, NFont::Color col) {
+inline void drawCenterText(SDL_Renderer *render, std::string msg, NFont &font, int x, int y, int w, int h, bool shadow, NFont::Color col) {
 	auto txtW = font.getWidth(msg.c_str());
 	auto txtH = font.getHeight(msg.c_str());
 	if (shadow)	font.draw(render, x+((w-txtW)/2) + 2, y+((h-txtH)/2) + 2, NFont::Color(0,0,0,255), msg.c_str());
@@ -23,7 +29,7 @@ void drawCenterText(SDL_Renderer *render, std::string msg, NFont &font, int x, i
 }
 
 //src: https://stackoverflow.com/a/24527943
-void drawCircle(SDL_Renderer * renderer, int centerX, int centerY, int radius) {
+inline void drawCircle(SDL_Renderer * renderer, int centerX, int centerY, int radius) {
    int x = radius;
    int y = 0;
    int error = 1 - x;

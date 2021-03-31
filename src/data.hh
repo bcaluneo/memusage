@@ -11,7 +11,7 @@
 #ifndef DATA_HH
 #define DATA_HH
 
-#define bytesToMB(b) b/(1024.0*1024.0)
+#define bytesToMB(b) b/(1024*1024)
 #define percent(a, b) a*100 / b
 
 typedef unsigned long long ull;
@@ -21,11 +21,25 @@ extern bool quit;
 
 static const std::vector<std::string> systemProcesses {
   "explorer.exe",
+  "Explorer.EXE",
   "ntoskrnl.exe",
+  "TextInputHost.exe",
+  "ApplicationFrameHost.exe",
+  "DllHost.exe",
+  "SecurityHealthSysTray.exe",
+  "CompPkgSrv.exe",
+  "ShellExperienceHost.exe",
+  "UserOOBEBroker.exe",
+  "SystemSettingsBroker.exe",
+  "AppVShNotify.exe",
+  "Microsoft.Photos.exe",
   "WerFault.exe",
+  "SearchFilterHost.exe",
   "backgroundTaskHost.exe",
   "backgroundTransferHost.exe",
   "winlogon.exe",
+  "taskhostw.exe",
+  "StartMenuExperienceHost.exe",
   "wininit.exe",
   "csrss.exe",
   "lsass.exe",
@@ -33,37 +47,15 @@ static const std::vector<std::string> systemProcesses {
   "services.exe",
   "taskeng.exe",
   "taskhost.exe",
+  "SearchApp.exe",
+  "SettingSyncHost.exe",
   "dwm.exe",
   "conhost.exe",
+  "cmd.exe",
   "svchost.exe",
+  "lsm.exe",
   "sihost.exe"
 };
-
-void PrintMemoryInfo(DWORD processID) {
-  HANDLE hProcess;
-  PROCESS_MEMORY_COUNTERS_EX pmc;
-
-  hProcess = OpenProcess(  PROCESS_QUERY_INFORMATION |
-    PROCESS_VM_READ,
-    FALSE, processID );
-    if (NULL == hProcess)
-    return;
-
-    TCHAR nameProc[MAX_PATH];
-    GetModuleFileNameExA(hProcess, nullptr, nameProc, sizeof(nameProc)/sizeof(*nameProc));
-    GetProcessMemoryInfo(hProcess, (PROCESS_MEMORY_COUNTERS *) &pmc, sizeof(pmc));
-
-    std::cout << nameProc << "\n";
-    // This returns information that is technically correct. This line will compute the Memory
-    // that is being used by a process that also includes memory that isn't private to that process.
-    // Task manager will just give the private memory of a process.
-    std::cout << "Memory Usage (MB): " << double(pmc.WorkingSetSize  / (1024.0*1024.0)) << "\n";
-    std::cout << "Memory Usage (MB): " << double(pmc.WorkingSetSize  / (1000.0*1000.0)) << "\n";
-    std::cout << "\n";
-
-    CloseHandle(hProcess);
-}
-
 
 int getData(void *data) {
   Chart* c = static_cast<Chart*>(data);
@@ -77,7 +69,10 @@ int getData(void *data) {
     EnumProcesses(processes, sizeof(processes), &cbNeeded);
     totalProcesses = cbNeeded / sizeof(DWORD);
 
+    unsigned systemUsage = 0;
+    std::map<unsigned, unsigned long> commonEx;
     for (size_t i = 0; i < totalProcesses; i++) {
+      bool system = 0;
       HANDLE hProcess;
       PROCESS_MEMORY_COUNTERS_EX pmc;
 
@@ -87,20 +82,41 @@ int getData(void *data) {
       if (NULL == hProcess) continue;
 
       TCHAR nameProc[MAX_PATH];
-      GetModuleFileNameExA(hProcess, nullptr, nameProc, sizeof(nameProc)/sizeof(*nameProc));
+      GetModuleBaseNameA(hProcess, nullptr, nameProc, sizeof(nameProc)/sizeof(*nameProc));
       GetProcessMemoryInfo(hProcess, (PROCESS_MEMORY_COUNTERS *) &pmc, sizeof(pmc));
 
       std::string nameString { nameProc };
       for (auto s : systemProcesses) {
-          // if (nameString.find(s) != std::string::npos) {
-          //   std::cout << nameString << "\n";
-          //   std::cout << "Memory Usage (MB): " << double(bytesToMB(pmc.WorkingSetSize)) << "\n";
-          //   std::cout << "\n";
-          // }
+          if (nameString.find(s) != std::string::npos) {
+            system = 1;
+            break;
+          }
       }
 
-      auto processInformation = std::make_tuple(nameProc, 0, pmc.WorkingSetSize, 0);
+      // auto processInformation = std::make_tuple(nameProc, 0, pmc.WorkingSetSize, 0);
+      if (system) {
+        systemUsage += bytesToMB(pmc.PrivateUsage);
+      } else {
+        unsigned ix = c->find(nameString);
+        if (ix == -1) c->addProcess({nameString, pmc.WorkingSetSize});
+        else {
+          auto it = commonEx.find(ix);
+          if (it == commonEx.end()) {
+            commonEx.insert({ix, pmc.WorkingSetSize});
+          } else {
+            it->second += pmc.WorkingSetSize;
+          }
+        }
+      }
+
       CloseHandle(hProcess);
+    }
+
+    c->setProcess(0, systemUsage, false);
+    if (!commonEx.empty()) {
+      for (const auto [ix, amount] : commonEx) {
+        c->setProcess(ix, amount, false);
+      }
     }
 
     SDL_Delay(1000);
