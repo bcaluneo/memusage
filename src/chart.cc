@@ -11,23 +11,23 @@ Chart::Chart() {
   addProcess("System", 0);
 }
 
-void Chart::draw(NFont &font, NFont &fontSmall, SDL_Renderer *render, unsigned yoff) {
+void Chart::draw(NFont &font, NFont &fontSmall, SDL_Renderer *render, unsigned h) {
   SDL_Rect bar;
   bar.w = 150;
-  bar.h = SCREEN_HEIGHT - (SCREEN_HEIGHT*.02);
+  bar.h = h - (h*.02);
   bar.x = 25;
-  bar.y = (SCREEN_HEIGHT - bar.h) / 2;
+  bar.y = (h - bar.h) / 2;
 
   std::stringstream os;
   os << "Physical Memory " << totalMemory/(1024*1024) << " MB ";
   os << "(" << usedMemory/(1024*1024) << " MB used)";
   unsigned msgX = ((SCREEN_WIDTH-font.getWidth(os.str().c_str()))/2);
-  unsigned msgY = SCREEN_HEIGHT - 2*LARGE_PT;
+  unsigned msgY = h - 2*LARGE_PT;
   SDL_RenderSetScale(render, 1.0, 1.0);
   drawTextWithOutline(render, os.str(), font, msgX, msgY, 1, NFont::Color(255, 255, 255, 255));
   SDL_RenderSetScale(render, RENDER_SCALE, RENDER_SCALE);
 
-  yoff = (SCREEN_HEIGHT - processList.size()*18) / 2 - 2*SMALL_PT;
+  unsigned yoff = (h - processList.size()*18) / 2 - 2*SMALL_PT;
 
   if (!processList.empty()) {
     auto totalUsage = getTotalUsage();
@@ -40,10 +40,10 @@ void Chart::draw(NFont &font, NFont &fontSmall, SDL_Renderer *render, unsigned y
       if (pString.size() > largestSize) largestSize = pString.size();
       drawTextWithOutline(render, pString, fontSmall, bar.x + bar.w + 30, yoff + SMALL_PT*ix, 1, NFont::Color(color.r, color.g, color.b));
 
-      SDL_Rect r {bar.x, bar.y, bar.w, 800*(std::get<1>(processList[ix])/1024.0/totalUsage)};
+      SDL_Rect r {bar.x, bar.y, bar.w, bar.h*(std::get<1>(processList[ix])/1024.0/totalUsage)};
       if (ix > 0) {
         for (int k = ix-1; k >= 0; --k) {
-          r.y += 800*(std::get<1>(processList[k])/1024.0/totalUsage);
+          r.y += bar.h*(std::get<1>(processList[k])/1024.0/totalUsage);
         }
       }
 

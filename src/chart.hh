@@ -17,7 +17,7 @@
 class Chart {
 public:
   Chart();
-  void draw(NFont &font, NFont &fontSmall, SDL_Renderer *render, unsigned yoff);
+  void draw(NFont &font, NFont &fontSmall, SDL_Renderer *render, unsigned h);
   void setPhysicalMemory(unsigned long long totalMemory, unsigned long long availMemory);
   void addProcess(std::string name, unsigned long amount);
   void setProcess(signed ix, unsigned long amount, bool add);
