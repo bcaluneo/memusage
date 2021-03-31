@@ -16,7 +16,6 @@ SDL_Renderer *render;
 
 int main(int argc, char **args) {
   SDL_Init(SDL_INIT_VIDEO);
-  TTF_Init();
 
 	window = SDL_CreateWindow("memusage", SDL_WINDOWPOS_CENTERED,
                                         SDL_WINDOWPOS_CENTERED,
@@ -30,7 +29,10 @@ int main(int argc, char **args) {
   Chart chart;
 	SDL_CreateThread(getData, "Data Thread", static_cast<void*>(&chart));
 
-  NFont font(render, "resources/font.ttf", 20, NFont::Color(174, 171, 255, 255));
+  NFont font(render, "resources/font.ttf", LARGE_PT, NFont::Color(174, 171, 255, 255)),
+        fontSmall(render, "resources/font.ttf", SMALL_PT, NFont::Color(174, 171, 255, 255));
+
+  SDL_RenderSetScale(render, RENDER_SCALE, RENDER_SCALE);
 
   unsigned yoff = 0;
   SDL_Event event;
@@ -49,16 +51,15 @@ int main(int argc, char **args) {
 				}
 		}
 
-    SDL_SetRenderDrawColor(render, 100, 100, 100, 255);
+    SDL_SetRenderDrawColor(render, 4, 28, 80, 255);
     SDL_RenderClear(render);
 
-    chart.draw(font, render, yoff);
+    chart.draw(font, fontSmall, render, yoff);
 
     SDL_RenderPresent(render);
-    SDL_Delay(1000 / 60);
+    SDL_Delay(1000);
   }
 
-	TTF_Quit();
 	SDL_Quit();
 
   return 0;

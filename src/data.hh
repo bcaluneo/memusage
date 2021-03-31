@@ -11,17 +11,13 @@
 #ifndef DATA_HH
 #define DATA_HH
 
-#define bytesToMB(b) b/(1024*1024)
-#define percent(a, b) a*100 / b
-
-typedef unsigned long long ull;
-typedef std::vector<std::tuple<std::string, size_t, ull, bool>> LIST;
-
 extern bool quit;
 
+// TODO: Maybe change this so if exe is in the windows directory it counts.
 static const std::vector<std::string> systemProcesses {
   "explorer.exe",
   "Explorer.EXE",
+  "ctfmon.exe",
   "ntoskrnl.exe",
   "TextInputHost.exe",
   "ApplicationFrameHost.exe",
@@ -40,6 +36,7 @@ static const std::vector<std::string> systemProcesses {
   "winlogon.exe",
   "taskhostw.exe",
   "StartMenuExperienceHost.exe",
+  "backgroundTaskHost.exe",
   "wininit.exe",
   "csrss.exe",
   "lsass.exe",
@@ -57,55 +54,50 @@ static const std::vector<std::string> systemProcesses {
   "sihost.exe"
 };
 
+bool pollSystemList(std::string nameString) {
+  for (auto s : systemProcesses) {
+      if (nameString.find(s) != std::string::npos) return 1;
+  }
+  return 0;
+}
+
 int getData(void *data) {
   Chart* c = static_cast<Chart*>(data);
+
   while (!quit) {
+    if (!c) continue;
+
     MEMORYSTATUSEX memStatus;
     memStatus.dwLength = sizeof(memStatus);
     GlobalMemoryStatusEx(&memStatus);
-    c->setPhysicalMemory(bytesToMB(memStatus.ullTotalPhys), bytesToMB(memStatus.ullTotalPhys)-bytesToMB(memStatus.ullAvailPhys));
+    c->setPhysicalMemory(memStatus.ullTotalPhys, memStatus.ullTotalPhys-memStatus.ullAvailPhys);
 
     DWORD processes[1024], cbNeeded, totalProcesses;
     EnumProcesses(processes, sizeof(processes), &cbNeeded);
     totalProcesses = cbNeeded / sizeof(DWORD);
 
     unsigned systemUsage = 0;
-    std::map<unsigned, unsigned long> commonEx;
+    std::map<std::string, unsigned long> commonEx;
     for (size_t i = 0; i < totalProcesses; i++) {
-      bool system = 0;
       HANDLE hProcess;
+      hProcess = OpenProcess(PROCESS_QUERY_INFORMATION |PROCESS_VM_READ, FALSE, processes[i]);
+      if (!hProcess) continue;
+
       PROCESS_MEMORY_COUNTERS_EX pmc;
+      TCHAR baseName[MAX_PATH], modName[MAX_PATH];
+      GetModuleBaseNameA(hProcess, nullptr, baseName, sizeof(baseName)/sizeof(*baseName));
+      GetModuleFileNameExA(hProcess, nullptr, modName, sizeof(modName)/sizeof(*modName));
+      GetProcessMemoryInfo(hProcess, (PROCESS_MEMORY_COUNTERS*) &pmc, sizeof(pmc));
 
-      hProcess = OpenProcess(  PROCESS_QUERY_INFORMATION |
-        PROCESS_VM_READ,
-        FALSE, processes[i] );
-      if (NULL == hProcess) continue;
-
-      TCHAR nameProc[MAX_PATH];
-      GetModuleBaseNameA(hProcess, nullptr, nameProc, sizeof(nameProc)/sizeof(*nameProc));
-      GetProcessMemoryInfo(hProcess, (PROCESS_MEMORY_COUNTERS *) &pmc, sizeof(pmc));
-
-      std::string nameString { nameProc };
-      for (auto s : systemProcesses) {
-          if (nameString.find(s) != std::string::npos) {
-            system = 1;
-            break;
-          }
-      }
-
-      // auto processInformation = std::make_tuple(nameProc, 0, pmc.WorkingSetSize, 0);
-      if (system) {
-        systemUsage += bytesToMB(pmc.PrivateUsage);
+      std::string name { baseName }, modNameString { modName };
+      if (modNameString.find("C:\\Windows") != std::string::npos || pollSystemList(name)) {
+        systemUsage += pmc.WorkingSetSize;
       } else {
-        unsigned ix = c->find(nameString);
-        if (ix == -1) c->addProcess({nameString, pmc.WorkingSetSize});
-        else {
-          auto it = commonEx.find(ix);
-          if (it == commonEx.end()) {
-            commonEx.insert({ix, pmc.WorkingSetSize});
-          } else {
-            it->second += pmc.WorkingSetSize;
-          }
+        auto it = commonEx.find(name);
+        if (it == commonEx.end()) {
+          commonEx.insert({name, pmc.WorkingSetSize});
+        } else {
+          it->second += pmc.WorkingSetSize;
         }
       }
 
@@ -114,12 +106,14 @@ int getData(void *data) {
 
     c->setProcess(0, systemUsage, false);
     if (!commonEx.empty()) {
-      for (const auto [ix, amount] : commonEx) {
-        c->setProcess(ix, amount, false);
+      for (const auto [name, amount] : commonEx) {
+        auto ix = c->find(name);
+        if (ix == -1) c->addProcess(name, amount);
+        else c->setProcess(ix, amount, true);
       }
     }
 
-    SDL_Delay(1000);
+    SDL_Delay(POLL_TIME);
   }
 
   return 0;

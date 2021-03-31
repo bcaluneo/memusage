@@ -2,13 +2,18 @@
 
 #include <string>
 #include <utility>
+#include <iostream>
 #include "../inc/NFont.h"
 
 #ifndef UTIL_HH
 #define UTIL_HH
 
-const unsigned SCREEN_WIDTH = 600;
-const unsigned SCREEN_HEIGHT = 950;
+const unsigned SCREEN_WIDTH = 800;
+const unsigned SCREEN_HEIGHT = 850;
+const unsigned SMALL_PT = 19;
+const unsigned LARGE_PT = 20;
+const unsigned POLL_TIME = 1000;
+const double RENDER_SCALE = 1.0;
 
 typedef std::tuple<std::string, unsigned long> Process;
 
@@ -17,7 +22,17 @@ inline void drawText(SDL_Renderer *render, std::string msg, NFont &font, int x, 
 }
 
 inline void drawTextWithShadow(SDL_Renderer *render, std::string msg, NFont &font, int x, int y, NFont::Color col) {
-	font.draw(render, x + 2, y + 2, NFont::Color(0, 0, 0, 255), msg.c_str());
+	for (unsigned i = 0; i < 2; ++i) font.draw(render, x + i, y + i, NFont::Color(0, 0, 0, 255), msg.c_str());
+	font.draw(render, x, y, col, msg.c_str());
+}
+
+inline void drawTextWithOutline(SDL_Renderer *render, std::string msg, NFont &font, int x, int y, int width, NFont::Color col) {
+	for (signed i = -width; i <= width; ++i) {
+		for (signed j = -width; j <= width; ++j) {
+			font.draw(render, x + i, y + j, NFont::Color(0, 0, 0, 255), msg.c_str());
+		}
+	}
+
 	font.draw(render, x, y, col, msg.c_str());
 }
 
