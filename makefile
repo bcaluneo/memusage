@@ -6,7 +6,7 @@ FLAGS += -Wall
 FLAGS += -ID:\SDL64\include\SDL2 -LD:\SDL64\lib -Iinc
 FLAGS += -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf
 
-FLAGS += -Wl,--subsystem,windows
+# FLAGS += -Wl,--subsystem,windows
 
 OBJS = main.o \
 			 nfont/NFont.o \

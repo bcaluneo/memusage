@@ -59,6 +59,7 @@ bool pollSystemList(std::string nameString) {
   for (auto s : systemProcesses) {
       if (nameString.find(s) != std::string::npos) return 1;
   }
+
   return 0;
 }
 
@@ -78,7 +79,7 @@ int getData(void *data) {
     totalProcesses = cbNeeded / sizeof(DWORD);
 
     unsigned systemUsage = 0;
-    std::map<std::string, size_t> commonEx;
+    std::map<std::string, std::pair<size_t, size_t>> commonEx;
     for (size_t i = 0; i < totalProcesses; i++) {
       HANDLE hProcess;
       hProcess = OpenProcess(PROCESS_QUERY_INFORMATION |PROCESS_VM_READ, FALSE, processes[i]);
@@ -89,30 +90,34 @@ int getData(void *data) {
       GetModuleBaseNameA(hProcess, nullptr, baseName, sizeof(baseName)/sizeof(*baseName));
       GetModuleFileNameExA(hProcess, nullptr, modName, sizeof(modName)/sizeof(*modName));
       GetProcessMemoryInfo(hProcess, (PROCESS_MEMORY_COUNTERS*) &pmc, sizeof(pmc));
-
-      if (pmc.WorkingSetSize/(MB*MB) == 0) continue;
-
       std::string name { baseName }, modNameString { modName };
+      if (pmc.WorkingSetSize/(MB*MB) == 0) continue;
+      if (pmc.WorkingSetSize/(MB*MB) < 10) name = "< 10 MB";
+
       if (modNameString.find("C:\\Windows") != std::string::npos || pollSystemList(name)) {
         systemUsage += pmc.WorkingSetSize;
       } else {
         auto it = commonEx.find(name);
         if (it == commonEx.end()) {
-          commonEx.insert({name, pmc.WorkingSetSize});
+          commonEx.insert({name, {pmc.WorkingSetSize, 0} });
         } else {
-          it->second += pmc.WorkingSetSize;
+          it->second.first += pmc.WorkingSetSize;
+          it->second.second++;
         }
       }
 
       CloseHandle(hProcess);
     }
 
-    c->setProcess(0, systemUsage, false);
+    c->clear();
+    c->setProcess(0, {systemUsage, 0} );
     if (!commonEx.empty()) {
-      for (const auto [name, amount] : commonEx) {
+      for (const auto [name, stats] : commonEx) {
+
+        // /*REMOVE*/if (name != "< 10 MB") continue;
         auto ix = c->find(name);
-        if (ix == -1) c->addProcess(name, amount);
-        else c->setProcess(ix, amount, false);
+        if (ix == -1) c->addProcess(name, stats);
+        else c->setProcess(ix, stats);
       }
     }
 

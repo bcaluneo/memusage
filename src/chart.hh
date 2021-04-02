@@ -21,9 +21,10 @@ public:
   Chart();
   void draw(NFont &font, NFont &fontSmall, SDL_Renderer *render, unsigned h);
   void setPhysicalMemory(size_t totalMemory, size_t availMemory);
-  void addProcess(std::string name, size_t amount);
-  void setProcess(signed ix, size_t amount, bool add);
+  void addProcess(std::string name, const std::pair<size_t, size_t>& stats);
+  void setProcess(signed ix, const std::pair<size_t, size_t>& stats);
   size_t getTotalUsage();
+  size_t getLargestSub();
   signed find(const std::string& processName);
   bool clear();
   unsigned getSize();
