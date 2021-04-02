@@ -7,7 +7,7 @@
 I've recreated a few IRIX tools ([Twilight](https://github.com/bcaluneo/Twilight) and [osview](https://github.com/bcaluneo/osview)) to work on Windows and this was next in line so here's a screenshot:
 ![Screenshot of memusage](screenshots/prev.png)
 <br/>
-The numbers reported here are the "Working Set". Under the "Processes" tab in Windows Task Manager the numbers reported there are a little different, the number there is the "active private working set". The "Details" tab will show the same number as reported here, but in kilobytes instead of megabytes. The difference is that the former is all the memory currently in use and the latter is the memory in use that cannot be shared with another process. Default poll time is 1000ms.
+The numbers reported here are the "Working Set". Under the "Processes" tab in Windows Task Manager the numbers reported there are a little different, the number there is the "active private working set". The "Details" tab will show the same number as reported here, but in kilobytes instead of megabytes. The difference is that the former is all the memory currently in use and the latter is the memory in use that cannot be shared with another process. Default poll time is 1000ms. Processes that use less than 50 MB are grouped together. The number in parentheses next to the name of a process is the number of subprocesses.
 
 ## Building
 
