@@ -10,7 +10,7 @@
 #include "chart.hh"
 #include "data.hh"
 
-// #define __TEST
+#define __TEST
 
 bool quit = 0;
 SDL_Window *window;
@@ -30,7 +30,7 @@ int renderThread(void *) {
     chart.draw(font, fontSmall, render, h);
 
     SDL_RenderPresent(render);
-    SDL_Delay(1000);
+    SDL_Delay(1000/20);
   }
 }
 
@@ -50,8 +50,6 @@ int main(int argc, char **args) {
   SDL_CreateThread(renderThread, "Render Thread", nullptr);
   SDL_CreateThread(getData, "Data Thread", static_cast<void*>(&chart));
 
-  SDL_RenderSetScale(render, RENDER_SCALE, RENDER_SCALE);
-
   SDL_Event event;
   #ifdef __TEST
     size_t* t;
@@ -64,6 +62,9 @@ int main(int argc, char **args) {
 				case SDL_QUIT:
 					quit = 1;
 					break;
+        case SDL_MOUSEMOTION:
+          Mouse::setMousePos(event.motion.x, event.motion.y);
+          break;
 				case SDL_KEYUP:
 					auto k = event.key.keysym.sym;
 					if (k == SDLK_ESCAPE) quit = 1;
@@ -87,7 +88,7 @@ int main(int argc, char **args) {
 				}
 		}
 
-    SDL_Delay(1000/60);
+    SDL_Delay(25);
   }
 
   #ifdef __TEST

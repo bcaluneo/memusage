@@ -11,10 +11,12 @@
 #include <iomanip>
 #include <cmath>
 #include "util.hh"
+// #include "mouse.hh"
 #include "../inc/NFont.h"
 
 #ifndef CHART_HH
 #define CHART_HH
+
 
 class Chart {
 public:
@@ -34,5 +36,23 @@ private:
   std::map<std::string, SDL_Color> colorList;
   size_t totalMemory, usedMemory;
 };
+
+namespace ChartManager {
+  class Manager {
+    public:
+      Manager();
+
+      Chart& getChart(const std::string& chartName);
+      void addChart(const std::string& chartName);
+      void pushChart(const std::string& chartName);
+      void setActiveChart(const std::string& chartName);
+      const Chart getActiveChart();
+
+    private:
+      std::map<std::string, Chart> charts;
+      std::stack<std::string> charts;
+      Chart activeChart;
+  };
+}
 
 #endif

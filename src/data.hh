@@ -92,7 +92,7 @@ int getData(void *data) {
       GetProcessMemoryInfo(hProcess, (PROCESS_MEMORY_COUNTERS*) &pmc, sizeof(pmc));
       std::string name { baseName }, modNameString { modName };
       if (pmc.WorkingSetSize/(MB*MB) == 0) continue;
-      if (pmc.WorkingSetSize/(MB*MB) < 10) name = "< 10 MB";
+      if (pmc.WorkingSetSize/(MB*MB) < CUTOFF) name = "< " + std::to_string(CUTOFF) + " MB";
 
       if (modNameString.find("C:\\Windows") != std::string::npos || pollSystemList(name)) {
         systemUsage += pmc.WorkingSetSize;
@@ -113,8 +113,6 @@ int getData(void *data) {
     c->setProcess(0, {systemUsage, 0} );
     if (!commonEx.empty()) {
       for (const auto [name, stats] : commonEx) {
-
-        // /*REMOVE*/if (name != "< 10 MB") continue;
         auto ix = c->find(name);
         if (ix == -1) c->addProcess(name, stats);
         else c->setProcess(ix, stats);

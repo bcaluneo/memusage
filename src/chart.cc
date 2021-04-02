@@ -4,23 +4,16 @@
 
 Chart::Chart() {
   processList.clear();
-  addProcess("System", {0, 0});
   colorList["System"] = {255, 255, 255, 255};
 }
 
 void Chart::draw(NFont &font, NFont &fontSmall, SDL_Renderer *render, unsigned h) {
-  SDL_Rect bar;
+  SDL_Rect bar, mouseRect {Mouse::mouseX, Mouse::mouseY, 1, 1};
   bar.w = 150;
   bar.h = h*.90;
   bar.x = 25;
   bar.y = (h - bar.h) / 2;
 
-  std::stringstream os;
-  os << "Physical Memory " << totalMemory/(MB*MB) << " MB ";
-  os << "(" << usedMemory/(MB*MB) << " MB used)";
-
-  unsigned msgX = ((SCREEN_WIDTH-font.getWidth(os.str().c_str()))/2);
-  unsigned msgY = h - 2*LARGE_PT;
   unsigned yOff = (h - processList.size()*18) / 2 - 2*SMALL_PT;
   unsigned xOff = 150;
   unsigned textX = bar.x + bar.w;
@@ -34,9 +27,14 @@ void Chart::draw(NFont &font, NFont &fontSmall, SDL_Renderer *render, unsigned h
       auto pString = std::get<0>(processList[ix]);
       auto pUsage = std::get<1>(processList[ix]).first;
       auto yScale = SMALL_PT*ix;
+      SDL_Rect sR {textX + xOff, yOff + yScale, font.getWidth(pString.c_str()), SMALL_PT};
       if (font.getWidth(pString.c_str()) > largestWidth) largestWidth = font.getWidth(pString.c_str());
       if (pUsage > largestUsage) largestUsage = pUsage;
-      drawTextWithOutline(render, pString, fontSmall, textX + xOff, yOff + yScale, 1, NFont::Color(color.r, color.g, color.b));
+      if (SDL_HasIntersection(&sR, &mouseRect)) {
+        drawTextWithOutline(render, pString, fontSmall, textX + xOff, yOff + yScale, 1, NFont::Color(255, 255, 255));
+      } else {
+        drawTextWithOutline(render, pString, fontSmall, textX + xOff, yOff + yScale, 1, NFont::Color(color.r, color.g, color.b));
+      }
 
       SDL_Rect r {bar.x, bar.y, bar.w, bar.h*(pUsage/1000.0/totalUsage)};
       if (ix > 0) {
@@ -81,21 +79,15 @@ void Chart::draw(NFont &font, NFont &fontSmall, SDL_Renderer *render, unsigned h
       os << "MB";
       off = font.getWidth(lss.str().c_str()) + font.getWidth(ls.str().c_str()) - font.getWidth(os.str().c_str());
       drawTextWithOutline(render, os.str(), fontSmall, startX + off, yOff + SMALL_PT*i, 1, NFont::Color(color.r, color.g, color.b));
-
-      continue;
-
-      for (unsigned j = 0; j < lss.str().size() + ls.str().size() + 1; ++j) {
-        os2 << " ";
-      }
-
-      auto width0 = font.getWidth(os2.str().c_str());
-      drawTextWithOutline(render, " MB", fontSmall, startX + width0, yOff + SMALL_PT*i, 1, NFont::Color(color.r, color.g, color.b));
     }
   }
 
-  SDL_RenderSetScale(render, 1.0, 1.0);
+  std::stringstream os;
+  os << "Physical Memory " << totalMemory/(MB*MB) << " MB ";
+  os << "(" << usedMemory/(MB*MB) << " MB used)";
+  unsigned msgX = ((SCREEN_WIDTH-font.getWidth(os.str().c_str()))/2);
+  unsigned msgY = h - 2*LARGE_PT;
   drawTextWithOutline(render, os.str(), font, msgX, msgY, 1, NFont::Color(255, 255, 255, 255));
-  SDL_RenderSetScale(render, RENDER_SCALE, RENDER_SCALE);
 }
 
 void Chart::setPhysicalMemory(size_t totalMemory, size_t usedMemory) {
@@ -143,7 +135,6 @@ void Chart::setProcess(signed ix, const std::pair<size_t, size_t>& stats) {
 
 bool Chart::clear() {
   processList.clear();
-  // colorList.clear();
   addProcess("System", {0, 0});
   return true;
 }
